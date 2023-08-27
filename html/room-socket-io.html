@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>thinkphp swoole websocket socket-io</title>
+    <link rel="stylesheet" type="text/css" href="https://www.layuicdn.com/layui/css/layui.css" />
+    <script src="https://www.layuicdn.com/layui/layui.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+</head>
+
+<body>
+
+
+    <input type="button" onclick="joinroom()" value="加入房间">
+    <input type="button" onclick="leaveroom()" value="离开房间">
+    <input type="button" onclick="chatroom()" value="对房间聊天">
+    <br>
+    <div id="info">
+    </div>
+
+    <script>
+        var $ = null
+        layui.use(['layer', 'jquery'], function () {
+            $ = layui.$,
+                layer = layui.layer //弹层
+        });
+
+        var ws = io("http://127.0.0.1:9501", {
+            transports: ['websocket']
+        })
+
+        ws.on("connect", function () {
+            console.log("连接成功")
+        })
+        ws.on("close", function () {
+            console.log("连接失败")
+        })
+
+        ws.on("roomjoincallback", function (data) {
+            $("#info").append(data + "</br>")
+        })
+        ws.on("roomleavecallback", function (data) {
+            $("#info").append(data + "</br>")
+        })
+        ws.on("roommessagecallback", function (data) {
+            $("#info").append(data + "</br>")
+        })
+        
+        function joinroom() {
+            //prompt层
+            layer.prompt({
+                title: '请输入房间号',
+                formType: 3
+            }, function (room, index) {
+                // console.log(room)
+                ws.emit("RoomJoin", {
+                    room: room
+                })
+                layer.close(index);
+            });
+        }
+
+        function leaveroom() {
+            //prompt层
+            layer.prompt({
+                title: '请输入房间号',
+                formType: 3
+            }, function (room, index) {
+                // console.log(room)
+                ws.emit("Roomleave", {
+                    room: room
+                })
+                layer.close(index);
+            });
+        }
+
+        function chatroom() {
+            layer.prompt({
+                title: '请输入在哪个房间聊天',
+                formType: 3
+            }, function (room, index) {
+                layer.close(index);
+                layer.prompt({
+                    title: '随便写点啥，并确认',
+                    formType: 2
+                }, function (text, index) {
+                    ws.emit("RoomMessage", {
+                        room: room,
+                        text: text,
+                    })
+                    layer.close(index);
+                });
+            });
+        }
+    </script>
+
+
+</body>
+
+</html>

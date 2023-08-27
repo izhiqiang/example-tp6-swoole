@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>socket.io</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+</head>
+<body>
+    <input type="text" id="msg" placeholder="发送信息">
+    <input type="text" id="to" placeholder="接收人fd">
+    <input type="button" onclick="wssend()" value="发送">
+    <br>
+
+    <script>
+        var socket = io("http://127.0.0.1:9501",{
+            transports:['websocket']
+        })
+        socket.on('connect',function(){
+            console.log("连接成功")
+        })
+        socket.on("close",function(){
+            console.log("连接关闭")
+        })
+        socket.on("messagecallback",function(data){
+            console.log(data)
+        })
+        function wssend() {
+			msg = document.getElementById("msg").value;
+			to = document.getElementById("to").value;
+            socket.emit("message",{
+                to:to,
+				msg:msg
+            })
+		}
+    </script>
+    
+</body>
+</html>

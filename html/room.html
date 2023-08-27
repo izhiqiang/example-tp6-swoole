@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>thinkphp swoole websocket</title>
+    <link rel="stylesheet" type="text/css" href="https://www.layuicdn.com/layui/css/layui.css" />
+
+
+</head>
+
+
+<input type="button" onclick="joinroom()" value="加入房间">
+<input type="button" onclick="leaveroom()" value="离开房间">
+<input type="button" onclick="chatroom()" value="对房间聊天">
+<br>
+<div id="info">
+
+
+</div>
+
+<body>
+    <script src="https://www.layuicdn.com/layui/layui.js"></script>
+    <script type="text/javascript">
+        var $ = null
+        layui.use(['layer', 'jquery'], function () {
+            $ = layui.$,
+                layer = layui.layer //弹层
+        });
+
+        var ws = new WebSocket("ws://127.0.0.1:9501")
+        ws.onopen = function () {
+            console.log("连接成功")
+        }
+        ws.onmessage = function (data) {
+            think_swoole_ws_message_callback(data.data)
+        }
+        ws.onclose = function () {
+            console.log("关闭连接")
+        }
+
+        // 房间聊天
+        function chatroom() {
+            //prompt层
+            layer.prompt({
+                title: '请输入在哪个房间聊天',
+                formType: 3
+            }, function (room, index) {
+                layer.close(index);
+                layer.prompt({
+                    title: '随便写点啥，并确认',
+                    formType: 2
+                }, function (text, index) {
+                    layer.close(index);
+                    ws.send(JSON.stringify(["RoomMessage", {
+                        room: room,
+                        text: text
+                    }]))
+                    layer.close(index);
+
+                });
+            });
+        }
+        // 聊天回调
+        function roommessagecallback(data){
+            $("#info").append(data + "</br>")
+        }
+
+
+        // 加入房间
+        function joinroom() {
+            //prompt层
+            layer.prompt({
+                title: '请输入房间号',
+                formType: 3
+            }, function (room, index) {
+                // console.log(room)
+                ws.send(JSON.stringify(["RoomJoin", {
+                    room: room,
+                }]))
+                layer.close(index);
+            });
+        }
+        // 加入房间 回调函数
+        function roomjoincallback(data) {
+            $("#info").append(data + "</br>")
+        }
+        // 离开房间
+        function leaveroom() {
+            //prompt层
+            layer.prompt({
+                title: '请输入房间号',
+                formType: 3
+            }, function (room, index) {
+                // console.log(room)
+                ws.send(JSON.stringify(["Roomleave", {
+                    room: room,
+                }]))
+                layer.close(index);
+            });
+        }
+        // 离开房间 回调函数
+        function roomleavecallback(data) {
+            $("#info").append(data + "</br>")
+        }
+
+        function think_swoole_ws_message_callback(messageStr) {
+            var s1 = messageStr.indexOf('[')
+            var s2 = messageStr.indexOf('{')
+            console.log(messageStr + "/" + s1 + "/" + s2)
+            if (s1 < 0) {
+                start = s2
+            }
+            if (s1 >= 0 && s1 > s2) {
+                start = s1
+            }
+            if (s1 >= 0 && s2 >= 0) {
+                start = Math.min(s1, s2)
+            }
+            if (start > 0) {
+                var message = messageStr.substr(start)
+                var dataArr = JSON.parse(message)
+                if (dataArr instanceof Array) {
+                    window[dataArr[0]](dataArr[1])
+                }
+            }
+        }
+    </script>
+
+</body>
+
+</html>

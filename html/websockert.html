@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>thinkphp swoole websocket</title>
+</head>
+
+<input type="text" id="msg" placeholder="发送信息">
+<input type="text" id="to" placeholder="接收人fd">
+<input type="button" onclick="wssend()" value="发送">
+<br>
+
+<body>
+	<script type="text/javascript">
+		var ws = new WebSocket("ws://127.0.0.1:9501")
+		ws.onopen = function () {
+			console.log("连接成功")
+		}
+		ws.onmessage = function (data) {
+//			console.log(data.data)
+			dataA = think_swoole_ws_data(data.data)
+			console.log(dataA)
+		}
+		
+		function think_swoole_ws_data(data){
+			var s1 = data.indexOf('[')
+			var s2 = data.indexOf('{')
+			if( s1 < 0 ){
+				start = s1
+			}
+			if(s1 >= 0 && s2 >= 0){
+				start = Math.min(s1,s2)
+			}
+			if(start > 0){
+				var datajsonstr = data.substr(start)
+				var dataArr = JSON.parse(datajsonstr)
+				if(dataArr instanceof Array){
+					return dataArr
+				}
+				return datajsonstr
+			}
+			return data
+		}
+		
+		ws.onclose = function () {
+			console.log("关闭连接")
+		}
+
+		function wssend() {
+			msg = document.getElementById("msg").value;
+			to = document.getElementById("to").value;
+			ws.send(JSON.stringify(['message', {
+				to:to,
+				msg:msg
+			}]));
+		}
+	</script>
+
+</body>
+
+</html>
